@@ -1,0 +1,380 @@
+swagger: '2.0'
+info:
+  title: Task API
+  version: '1.0.0'
+paths:
+  /tasks:
+    post:
+      summary: Create a single tasks
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Task to be created
+          required: true
+          schema:
+            $ref: '#/definitions/TaskCreateRequest'
+      responses:
+        200:
+          description: Successful response
+          schema:
+            type: string
+            description: task-id
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+  /tasks/{task-id}:
+    get:
+      summary: Retrieve a single tasks by ID
+      parameters:
+        - $ref: '#/parameters/taskIdParam'
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/Task'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+  /task-batch:
+    post:
+      summary: Create a batch of tasks. Can be ordered or unordered
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Batch of tasks to be created
+          required: true
+          schema:
+            $ref: '#/definitions/TaskBatchCreateRequest'
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/TaskBatchCreateResponse'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+  /task/{batch-id}:
+    get:
+      summary: Retrieve a batch of tasks by batch ID
+      parameters:
+        - name: batch-id
+          in: path
+          required: true
+          type: string
+          description: The ID of the batch to retrieve
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/TaskBatchResponse'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+  
+  /tasks/{task-id}/cancel:
+    post:
+      summary: Cancel a specific tasks in queue by task-id
+      parameters:
+        - $ref: '#/parameters/taskIdParam'
+      responses:
+        200:
+          description: Cancel status
+          schema:
+            $ref: '#/definitions/CancelStatusResponse'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+    get:
+      summary: Retrieve the cancel status of a specific tasks by task-id
+      parameters:
+        - $ref: '#/parameters/taskIdParam'
+      responses:
+        200:
+          description: Cancel status
+          schema:
+            $ref: '#/definitions/CancelStatusResponse'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+  /accounts/wrapping-public-key:
+    get:
+      summary: Retrieve the wrapping public key
+      responses:
+        200:
+          description: Wrapping public key details
+          schema:
+            $ref: '#/definitions/WrappingPublicKeyResponse'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+  /accounts:
+    post:
+      summary: Create or import an account
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Account details to be created or imported
+          required: true
+          schema:
+            $ref: '#/definitions/AccountCreateRequest'
+      responses:
+        200:
+          description: Successful response
+          schema:
+            type: string
+            description: Account address
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+    get:
+      summary: Retrieve accounts by chain
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          type: string
+          description: The chain to filter accounts by (e.g., ethereum)
+      responses:
+        200:
+          description: List of accounts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccountResponse'
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+
+parameters:
+  taskIdParam:
+    name: task-id
+    in: path
+    required: true
+    type: string
+    description: The ID of the tasks to retrieve
+
+definitions:
+  Task:
+    type: object
+    properties:
+      id:
+        type: string
+      chain:
+        type: string
+      from:
+        type: string
+        format: byte
+      status:
+        type: string
+      fields:
+        $ref: '#/definitions/Fields'
+      fee:
+        type: string
+      hash:
+        type: string
+      previousTask:
+        type: string
+      history:
+        type: array
+        items:
+          $ref: '#/definitions/HistoryItem'
+      retry:
+        $ref: '#/definitions/Retry'
+
+  TaskCreateRequest:
+    type: object
+    properties:
+      chain:
+        type: string
+      from:
+        type: string
+        format: byte
+      fields:
+        $ref: '#/definitions/Fields'
+      priceStrategy:
+        type: string
+        description: gas price strategy
+      priority:
+        type: integer
+        description: Priority of the task, accepts 1 ~ 10, defauts to 5. The tx engine will distribute smaller nonce for high priority tasks and push them to chain with priority. This field is independent from priceStategy field, so it should be noticed that a task with low priceStrategy but high priority might cause a large bunch of transactions pending.
+      requestId:
+        type: string
+        description: Optional, the identifier for the request, should be unique for each new request. It will prevent commit same request twice or more, the request id will expire after a certain period, for example, 1 day
+      retry:
+        $ref: '#/definitions/Retry'
+
+  Fields:
+    type: object
+    properties:
+      to:
+        type: string
+        format: byte
+      function:
+        type: string
+      params:
+        type: array
+        items:
+          type: string
+      maxFeePerGas:
+        type: integer
+
+  HistoryItem:
+    type: object
+    properties:
+      attempt:
+        type: integer
+      timestamp:
+        type: integer
+        format: int64
+      errorCode:
+        type: integer
+      errorMessage:
+        type: string
+      transactionHash:
+        type: string
+
+  Retry:
+    type: object
+    properties:
+      maxAttempts:
+        type: integer
+        description: Optional, the max attempts that one transaction would retry
+      deadline:
+        type: integer
+        format: int64
+        description: Optional, the deadline that the request will not be retried. Could be timestamp, blockNumber, ...
+      interval:
+        type: integer
+        format: integer
+        description: Optional, the interval between each retry
+
+  TaskBatchCreateRequest:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [unordered, ordered]
+        description: If ordered, all task should have same `from`, `chain` and `priority` field. All tasks in the request will be executed in order, and subsequent task will not be on chain unless the previous one succeeds.
+      tasks:
+        type: array
+        items:
+          $ref: '#/definitions/TaskCreateRequest'
+      requestId:
+        type: string
+
+  TaskBatchCreateResponse:
+    type: object
+    properties:
+      batch-id:
+        type: string
+      taskIds:
+        type: array
+        items:
+          type: string
+
+  TaskBatchResponse:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [unordered, ordered]
+      batch-id:
+        type: string
+      batchStatus:
+        type: string
+      tasks:
+        type: array
+        items:
+          $ref: '#/definitions/Task'
+
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+      details:
+        type: string
+
+  CancelStatusResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        enum: [processing, success, failure]
+      message:
+        type: string
+      errorCode:
+        type: string
+        description: Error code, present only if status is 'failure'
+      errorMessage:
+        type: string
+        description: Error message, present only if status is 'failure'
+      task-id:
+        type: string
+        description: Task ID, present only if status is 'failure'
+    
+  WrappingPublicKeyResponse:
+    type: object
+    properties:
+      wrapping-public-key:
+        type: string
+      wrappingAlg:
+        type: string
+
+  AccountCreateRequest:
+    type: object
+    properties:
+      chain:
+        type: string
+      wrappedPrivateKey:
+        type: string
+      wrapping-public-key:
+        type: string
+      wrappingAlg:
+        type: string
+
+  AccountResponse:
+    type: object
+    properties:
+      address:
+        type: string
+      publicKey:
+        type: string
+      chains:
+        type: array
+        items:
+          type: string
+      alias:
+        type: string
+      status:
+        type: string
+      alg:
+        type: string
