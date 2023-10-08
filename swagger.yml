@@ -251,6 +251,8 @@ definitions:
     properties:
       attempt:
         type: integer
+      hash:
+        type: string
       timestamp:
         type: integer
         format: int64
