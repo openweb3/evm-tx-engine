@@ -1,0 +1,3 @@
+package accountadapter
+
+// account adapter
