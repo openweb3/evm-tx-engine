@@ -30,10 +30,22 @@ func StartPickerService(db *gorm.DB) {
 
 	for _, task := range tasks {
 		// 为任务创建一个新的 ChainTransaction
+		field := models.Field{
+			To:                task.Field.To,
+			MaxFeePerGas:      task.Field.MaxFeePerGas,
+			Data:              task.Field.Data,
+			GasLimit:          task.Field.GasLimit,
+			GasPrice:          task.Field.GasPrice,
+			Value:             task.Field.Value,
+			PriorityFeePerGas: task.Field.PriorityFeePerGas,
+		}
+		db.Create(&field)
+
 		tx := models.ChainTransaction{
 			TaskId:              task.ID,
 			IsCancelTransaction: false,
 			TxStatus:            "TARGET_QUEUE",
+			FieldId:             field.ID,
 		}
 
 		// 将交易保存到数据库
