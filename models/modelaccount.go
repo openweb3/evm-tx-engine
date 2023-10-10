@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // Account struct defines the fields of an account
 type Account struct {
@@ -14,8 +18,11 @@ type Account struct {
 	// Alias of the account
 	Alias string `gorm:"type:varchar(255)"`
 	// Status of the account
-	AccountStatus            string `gorm:"type:varchar(255)"`
-	TransactionCountInternal uint   `gorm:"type:int"`
+	AccountStatus string `gorm:"type:varchar(255)"`
+	// internal transaction count
+	TransactionCountInternal uint `gorm:"type:int"`
+	LastSponsorInit          time.Time
+	LastSponsorReceived      time.Time
 }
 
 // Chain struct defines the fields of a chain
