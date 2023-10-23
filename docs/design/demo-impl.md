@@ -2,6 +2,8 @@
 
 ## order
 
+先做pipeline
+
 - [ ] api
 - [x] account
 - [x] model

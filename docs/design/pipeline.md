@@ -10,15 +10,19 @@ tasklist
 |
 targetQueue: no bigger than several hundreds(e.g. 200 ?)
 |
+| execution simulator
+| gasLimit 在这里分配
+|
 | transactions will go to gasEnoughQueue if gas is enough
 | the database（redis?） maintains a field named `internalPendingBalance`
 | 全局变量 MAX_GAS_PRICE 会被用来估算gas开销
+| 使用 eth_getBalance(..., 'finalized') 来估算余额
 |
-| 交易的费用用粗粒度的方式估算。不打算在这一步完全避免gas不足的问题
+| 交易的费用用粗粒度的方式估算？（不打算在这一步完全避免gas不足的问题？）
 |
 gasEnoughQueue
 |
-| nonce manager
+| nonce manager(是否要移到 targetQueue -> gasEnoughQueue ?)
 | 理论上来说，nonce manager知道所有用户下nonce的分布状况
 | 一个简单的实现——数据库会维护单个字段`internalNextNonce`。代表下次分配的nonce值。该值考虑了constructedQueue中的nonce分配情况
 |
@@ -33,10 +37,12 @@ signed: 已签名的 raw_transaction
 | send to nodes
 |
 | 发送的结果分为两种: 1. 交易被节点接收。 2. 报错，交易未被接收（余额不足/超出rate limit/。。。）
-| 注意：交易一旦被节点接收，就需要一直维护该交易的状态，因为我们无法保证该交易会被丢弃
 |
 pending -> latest -> safe -> finalized
 ｜
+
+｜status watcher 观察pending交易状态, 观察链上交易状态
+｜注意：交易一旦被节点接收，就需要一直维护该交易的状态，因为我们无法保证该交易会被丢弃
 
 ｜
 
@@ -71,3 +77,10 @@ for tx in constructed:
 ### chain watcher
 
 监听链上不处于 stable 状态的交易状态
+
+### sponsor
+
+余额不足监听：
+
+1. 余额不足
+2. 对应From账户没有进行中的sponsor交易

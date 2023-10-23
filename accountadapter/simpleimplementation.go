@@ -1,7 +1,5 @@
 package accountadapter
 
-// TODO: block same data signing (if not using same nonce, then secret key would leak)
-
 import (
 	"crypto/ecdsa"
 	"errors"
@@ -10,7 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/openweb3/evm-tx-engine/models"
 )
+
+// TODO: block same data signing (if not using same nonce, then secret key would leak)
 
 type SimpleAccountAdapter struct {
 	keystore *keystore.KeyStore
@@ -63,15 +64,15 @@ func (s *SimpleAccountAdapter) CreateAccount(chain string, wrappedPrivateKey str
 	return account.Address.Hex(), nil
 }
 
-func (s *SimpleAccountAdapter) GetAccounts(chain string) ([]Account, error) {
+func (s *SimpleAccountAdapter) GetAccounts(chain string) ([]models.Account, error) {
 	if chain != "ethereum" {
 		return nil, errors.New("unsupported chain")
 	}
 
 	ethAccounts := s.keystore.Accounts()
-	var accounts []Account
+	var accounts []models.Account
 	for _, acc := range ethAccounts {
-		accounts = append(accounts, Account{
+		accounts = append(accounts, models.Account{
 			Address: acc.Address.Hex(),
 			// ... other fields, you might want to store additional metadata separately.
 		})

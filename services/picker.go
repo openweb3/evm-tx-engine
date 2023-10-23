@@ -7,7 +7,7 @@ import (
 
 // pick task and add tx transactions
 // the task should have no related tx
-func StartPickerService(db *gorm.DB) {
+func StartPickerRound(db *gorm.DB) {
 	var tasks []models.Task
 	pageSize := 100
 
@@ -26,7 +26,12 @@ func StartPickerService(db *gorm.DB) {
 
 	// TODO: lock
 	// TODO: modify task status
-	db.Order("From, Priority, CreatedAt").Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.TaskId = tasks.ID)").Limit(pageSize).Find(&tasks)
+	// db.Order("From, Priority, CreatedAt").Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.TaskId = tasks.ID)").Preload("Field").Limit(pageSize).Find(&tasks)
+
+	// =================================
+	// First of all use a simple implementation here
+	// search all tasks with no chain_transaction and then add a transaction for the task
+	db.Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.TaskId = tasks.ID)").Preload("Field").Limit(pageSize).Find(&tasks)
 
 	for _, task := range tasks {
 		// 为任务创建一个新的 ChainTransaction
