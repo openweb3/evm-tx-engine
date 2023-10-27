@@ -3,7 +3,6 @@ package models
 import "github.com/openweb3/evm-tx-engine/utils"
 
 // Chain struct defines the fields of a chain
-// 写竞争：无
 type Chain struct {
 	ID   uint   `gorm:"primaryKey"` // 先只考虑是primary key
 	Type string `gorm:"type:varchar(255)"`

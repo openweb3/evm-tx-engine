@@ -2,6 +2,8 @@ package services
 
 import (
 	"github.com/openweb3/evm-tx-engine/models"
+	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -31,29 +33,34 @@ func StartPickerRound(db *gorm.DB) {
 	// =================================
 	// First of all use a simple implementation here
 	// search all tasks with no chain_transaction and then add a transaction for the task
-	db.Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.TaskId = tasks.ID)").Preload("Field").Limit(pageSize).Find(&tasks)
+	db.Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.task_id = tasks.ID)").Preload("Field").Limit(pageSize).Find(&tasks)
 
 	for _, task := range tasks {
 		// 为任务创建一个新的 ChainTransaction
-		field := models.Field{
-			To:                task.Field.To,
-			MaxFeePerGas:      task.Field.MaxFeePerGas,
-			Data:              task.Field.Data,
-			GasLimit:          task.Field.GasLimit,
-			GasPrice:          task.Field.GasPrice,
-			Value:             task.Field.Value,
-			PriorityFeePerGas: task.Field.PriorityFeePerGas,
-		}
-		db.Create(&field)
+		// field :=
+		// db.Create(&field)
 
 		tx := models.ChainTransaction{
 			TaskId:              task.ID,
 			IsCancelTransaction: false,
-			TxStatus:            "TARGET_QUEUE",
-			FieldId:             field.ID,
+			TxStatus:            utils.TxInternalTargetQueue,
+			Field: models.Field{
+				To:                task.Field.To,
+				MaxFeePerGas:      task.Field.MaxFeePerGas,
+				Data:              task.Field.Data,
+				GasLimit:          task.Field.GasLimit,
+				GasPrice:          task.Field.GasPrice,
+				Value:             task.Field.Value,
+				PriorityFeePerGas: task.Field.PriorityFeePerGas,
+			},
 		}
 
 		// 将交易保存到数据库
-		db.Create(&tx)
+		err := db.Create(&tx).Error
+		if err != nil {
+			logrus.WithError(err).Error("Failed to create tx")
+			return
+		}
+		logrus.WithField("txId", tx.ID).Infof("transaction created for task %d", task.ID)
 	}
 }

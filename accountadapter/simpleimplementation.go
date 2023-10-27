@@ -90,13 +90,14 @@ func (s *SimpleAccountAdapter) SignRaw(address string, data []byte) ([]byte, err
 }
 
 func (s *SimpleAccountAdapter) SignTransaction(address string, transaction interface{}) ([]byte, error) {
-	return nil, errors.New("Not implemented")
+	rawTx := []byte{8}
+	return rawTx, nil
 }
 
 func (s *SimpleAccountAdapter) Encrypt(address string, data []byte) ([]byte, error) {
-	return nil, errors.New("Not implemented")
+	return nil, errors.New("not implemented")
 }
 
 func (s *SimpleAccountAdapter) Verify(address string, signature, data []byte) (bool, error) {
-	return false, errors.New("Not implemented")
+	return false, errors.New("not implemented")
 }

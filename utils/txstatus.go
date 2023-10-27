@@ -34,7 +34,9 @@ const (
 	TxChainFinalizedError TxStatus = "FINALIZED_ERROR"
 )
 
-func InferSentTransactionStatus(meta TxStatusMeta, legacyTxStatus TxStatus, cachedTaggedBlockNumbers TaggedBlockNumbers) (TxStatus, error) {
+// why legacy tx status is needed
+// certain transaction will be moved into error state because of too long pending()
+func InferSentTransactionStatus(meta TxResultMeta, legacyTxStatus TxStatus, cachedTaggedBlockNumbers TaggedBlockNumbers) (TxStatus, error) {
 	// TODO: consider errors
 	if !legacyTxStatus.IsSent() {
 		return legacyTxStatus,
@@ -43,13 +45,13 @@ func InferSentTransactionStatus(meta TxStatusMeta, legacyTxStatus TxStatus, cach
 	if meta.BlockNumber == nil {
 		return TxPoolPending, nil
 	}
-	if meta.BlockNumber.ToInt().Uint64() > cachedTaggedBlockNumbers.FinalizedBlock {
+	if meta.BlockNumber.ToInt().Uint64() <= cachedTaggedBlockNumbers.FinalizedBlock {
 		return TxChainFinalized, nil
 	}
-	if meta.BlockNumber.ToInt().Uint64() > cachedTaggedBlockNumbers.SafeBlock {
+	if meta.BlockNumber.ToInt().Uint64() <= cachedTaggedBlockNumbers.SafeBlock {
 		return TxChainSafe, nil
 	}
-	if meta.BlockNumber.ToInt().Uint64() > cachedTaggedBlockNumbers.LatestBlock {
+	if meta.BlockNumber.ToInt().Uint64() <= cachedTaggedBlockNumbers.LatestBlock {
 		return TxChainLatest, nil
 	}
 	return legacyTxStatus,

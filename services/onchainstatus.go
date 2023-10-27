@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/openweb3/evm-tx-engine/models"
 	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -16,11 +17,18 @@ func StartTaggedBlockNumberUpdateRound(db *gorm.DB) {
 	for _, chain := range chains {
 		taggedBlockNumbers, err := utils.W3.GetTaggedBlockNumbers(chain.Name)
 		if err != nil {
-			chain.LatestBlock = taggedBlockNumbers.LatestBlock
-			chain.SafeBlock = taggedBlockNumbers.SafeBlock
-			chain.FinalizedBlock = taggedBlockNumbers.FinalizedBlock
-			db.Save(&chain)
+			logrus.WithError(err).Error("Failed to get tagged block numbers")
+			continue
 		}
+		chain.LatestBlock = taggedBlockNumbers.LatestBlock
+		chain.SafeBlock = taggedBlockNumbers.SafeBlock
+		chain.FinalizedBlock = taggedBlockNumbers.FinalizedBlock
+		err = db.Save(&chain).Error
+		if err != nil {
+			logrus.WithError(err).Error("Failed to update tagged block numbers")
+			continue
+		}
+		// logrus.WithField("service", "ChainUpdate").Info("Updated tagged block numbers")
 	}
 	// TODO: panic or something
 }
@@ -35,23 +43,41 @@ func StartTransactionChainStatusUpdateRound(db *gorm.DB) {
 	// we only need transaction block
 	// TODO: batch get
 	var transactions []models.ChainTransaction
-	err := db.Preload("Task.From.Chain").Where("is_stable == true").Find(&transactions).Error
+	err := db.Find(&transactions, "is_stable != true").Error
+	// err := db.Find(&transactions).Error
 	if err != nil {
+		logrus.WithError(err).Errorf("failed to get transactions")
 		return
 	}
 	for _, tx := range transactions {
 		if !tx.TxStatus.IsSent() {
 			continue
 		}
-		meta, err := utils.W3.GetTransactionDetail(tx.Task.From.Chain.Name, tx.Hash)
-		if err == nil {
+		fromAccount, err := tx.GetTransactionFrom(db)
+		if err != nil {
+			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to get transaction from")
+			return
+		}
+		meta, err := utils.W3.GetTransactionResult(fromAccount.Chain.Name, tx.Hash)
+		if err != nil {
+			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to get transaction detail")
 			return
 		}
 		// update Block number
-		tx.BlockNumber = uint((*meta.BlockNumber).ToInt().Int64())
-		txNewStatus, err := utils.InferSentTransactionStatus(meta, tx.TxStatus, tx.Task.From.Chain.GetTaggedBlockNumbers())
-		if err == nil {
+		if meta.BlockNumber == nil {
+			tx.BlockNumber = nil
+		} else {
+			blockNumber := meta.BlockNumber.ToInt().Uint64()
+			tx.BlockNumber = &blockNumber
+		}
+
+		txNewStatus, err := utils.InferSentTransactionStatus(meta, tx.TxStatus, fromAccount.Chain.GetTaggedBlockNumbers())
+		if err != nil {
+			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to infer transaction status")
 			return
+		}
+		if txNewStatus == tx.TxStatus {
+			continue
 		}
 		// update status
 		tx.TxStatus = txNewStatus
@@ -60,7 +86,12 @@ func StartTransactionChainStatusUpdateRound(db *gorm.DB) {
 			// update IsStable
 			tx.IsStable = true
 		}
-		db.Save(&tx)
+		err = db.Save(&tx).Error
+		if err != nil {
+			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to update transaction status")
+			return
+		}
+		logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Infof("transaction status updated to %s", tx.TxStatus)
 	}
 	// TODO: second loop, update error transaction status according to same nonce status to check if the transaction is already stable
 }

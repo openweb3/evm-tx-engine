@@ -2,18 +2,10 @@ package accountadapter
 
 import "github.com/openweb3/evm-tx-engine/models"
 
-// Account represents a blockchain account with its metadata.
-// type Account struct {
-// 	Address   string   `json:"address"`
-// 	PublicKey string   `json:"publicKey"`
-// 	Chains    []string `json:"chains"`
-// 	Alias     string   `json:"alias"`
-// 	Status    string   `json:"status"`
-// 	Alg       string   `json:"alg"`
-// }
+var Signer AccountAdapter
 
-// AccountManagerAdapter is the interface for the account manager adapter.
-type AccountManagerAdapter interface {
+// AccountAdapter is the interface for the account manager adapter.
+type AccountAdapter interface {
 	GetWrappingPublicKey() (map[string]string, error)
 	CreateAccount(chain string, wrappedPrivateKey string, wrappingPublicKey string, wrappingAlg string) (string, error)
 	GetAccounts(chain string) ([]models.Account, error)
@@ -23,6 +15,6 @@ type AccountManagerAdapter interface {
 	Verify(address string, signature, data []byte) (bool, error)
 }
 
-func GetAccountAdapter(*models.Account) (AccountManagerAdapter, error) {
-	return NewSimpleAccountAdapter(), nil
+func init() {
+	Signer = NewSimpleAccountAdapter()
 }
