@@ -54,3 +54,40 @@ func batchSign(db *gorm.DB, txs *[]models.ChainTransaction) error {
 	}
 	return nil
 }
+
+// TODO: batch save
+func StartSigningWorkerRound(ctx *QueueContext, maxBatchSize int) error {
+	txs := ctx.SigningQueue.MustDequeBatch(maxBatchSize)
+	if len(*txs) == 0 {
+		return nil
+	}
+
+	backupTxs := *txs
+
+	err := func() error {
+		err := batchSign(ctx.Db, txs)
+		if err != nil {
+			// do something
+			logrus.WithField("service", "signing").WithError(err).Error("error signing transactions")
+			return err
+		}
+		for i := range *txs {
+			(*txs)[i].TxStatus = utils.TxInternalSigned
+		}
+		err = ctx.Db.Save(&txs).Error
+		return err
+	}()
+
+	if err != nil {
+		*txs = backupTxs
+		logrus.WithField("service", "signing").WithError(err).Error("Error saving transaction")
+		for _, tx := range *txs {
+			ctx.ErrQueue.MustEnqueWithLog(tx, "SigningService", "error saving transaction")
+		}
+		return err
+	}
+	for _, tx := range *txs {
+		ctx.SendingQueue.MustEnqueWithLog(tx, "SigningService", "transaction signed")
+	}
+	return nil
+}

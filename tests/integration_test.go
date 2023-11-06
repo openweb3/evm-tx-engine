@@ -86,12 +86,17 @@ func TestPipeline(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	go services.StartServices(db)
+	ctx, err := services.InitQueueContext(db)
+	if err != nil {
+		panic(err)
+	}
+
+	go services.StartWorkers(ctx)
 	taskIds, err := insertTasks(db)
 	if err != nil {
 		panic(err)
 	}
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second)
 	err = checkTasksStatus(db, taskIds)
 	if err != nil {
 		panic(err)

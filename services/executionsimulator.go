@@ -8,7 +8,6 @@ import (
 )
 
 // estimates gas consumption
-
 func StartExecutionSimulationRound(db *gorm.DB) {
 	var txs []models.ChainTransaction
 
@@ -30,4 +29,17 @@ func StartExecutionSimulationRound(db *gorm.DB) {
 		}
 		logrus.WithField("service", "execution simulator").WithField("txId", tx.ID).Info("gas limit set for transaction")
 	}
+}
+
+func StartExecutionSimulationWorkerRound(ctx *QueueContext, maxBatchSize int) error {
+	txs := ctx.TargetQueue.MustDequeBatch(maxBatchSize)
+
+	for _, tx := range *txs {
+		if tx.Field.GasLimit != 0 {
+			continue
+		}
+		tx.Field.GasLimit = 10000000
+		ctx.BalanceCheckingQueue.MustEnqueWithLog(tx, "ExecutionSimulator", "gas limit set")
+	}
+	return nil
 }

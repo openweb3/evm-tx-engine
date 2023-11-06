@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+
 	"github.com/openweb3/evm-tx-engine/models"
 	"github.com/openweb3/evm-tx-engine/utils"
 	"github.com/sirupsen/logrus"
@@ -96,25 +98,84 @@ func StartTransactionChainStatusUpdateRound(db *gorm.DB) {
 	// TODO: second loop, update error transaction status according to same nonce status to check if the transaction is already stable
 }
 
-// // check all unstable transaction status, including PoolError
-// // how to check
-// func StartChainStatusUpdater(db *gorm.DB) {
+func updateTransactionStatus(db *gorm.DB, tx *models.ChainTransaction) error {
+	backupTx := *tx
+	err := func() error {
+		fromAccount, err := tx.GetTransactionFrom(db)
+		if err != nil {
+			return err
+		}
+		meta, err := utils.W3.GetTransactionResult(fromAccount.Chain.Name, tx.Hash)
+		if err != nil {
+			return errors.New("failed to get transaction detail")
+		}
+		// update Block number
+		if meta.BlockNumber == nil {
+			tx.BlockNumber = nil
+		} else {
+			blockNumber := meta.BlockNumber.ToInt().Uint64()
+			tx.BlockNumber = &blockNumber
+		}
 
-// 	unstableChainStatus := []utils.TxStatus{utils.TxPoolPending, utils.TxPoolError, utils.TxChainLatest, utils.TxChainSafe, utils.TxChainLatestError, utils.TxChainSafeError}
+		txNewStatus, err := utils.InferSentTransactionStatus(meta, tx.TxStatus, fromAccount.Chain.GetTaggedBlockNumbers())
+		if err != nil {
+			return errors.New("failed to infer transaction status")
+		}
+		if txNewStatus == tx.TxStatus {
+			return nil
+		}
+		// update status
+		tx.TxStatus = txNewStatus
+		// tx might be also stable if conflict nonce tx is finalized
+		if tx.TxStatus.IsStable() {
+			// update IsStable
+			tx.IsStable = true
+		}
+		err = db.Save(&tx).Error
+		return err
+	}()
+	if err != nil {
+		*tx = backupTx
+		return err
+	}
 
-// 	var unstableChainTxs []models.ChainTransaction
+	return nil
+}
 
-// 	// TODO: consider alternative implementation
-// 	//       query each transaction of from with difference nonces
+func StartTransactionChainStatusUpdateWorkerRound(ctx *QueueContext, maxBatchSize int) error {
+	// several loops
+	// first loop, update transaction status only depending on its chain status
+	// we only need transaction block
+	// TODO: batch get
+	transactions := ctx.PoolOrChainQueue.MustDequeBatch(maxBatchSize)
+	if len(*transactions) == 0 {
+		return nil
+	}
+	for _, tx := range *transactions {
+		if !tx.TxStatus.IsSent() {
+			panic("unexpected")
+		}
 
-// 	// filterOut unstable transactions
-// 	db.Model(&models.ChainTransaction{}).Where("status IN ?", unstableChainStatus).Find(&unstableChainTxs)
+		err := func() error {
+			err := updateTransactionStatus(ctx.Db, &tx)
+			return err
+		}()
 
-// 	// TODO: batch query & update
-// 	for _, tx := range unstableChainTxs {
-// 		tx.UpdateStatus(db)
-// 	}
-// }
+		if err != nil {
+			ctx.ErrQueue.MustEnqueWithLog(tx, "onchainstatus", "error saving transaction")
+			// return err
+			continue
+		}
+
+		if tx.TxStatus.IsStable() {
+			logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Infof("transaction become stable: %s", tx.TxStatus)
+			continue
+		}
+		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "onchainstatus", "watching transaction status")
+	}
+	return nil
+	// TODO: second loop, update error transaction status according to same nonce status to check if the transaction is already stable
+}
 
 // watch the pending transactions. move them into error states if certain circumstances met
 // 1. current gas price & tx gas price & pending time（might vary depending on strategy） -> TxPoolLowPrice

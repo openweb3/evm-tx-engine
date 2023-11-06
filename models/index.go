@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/openweb3/evm-tx-engine/config"
 	"gorm.io/driver/mysql"
@@ -38,4 +39,17 @@ func Migrate(db *gorm.DB) error {
 		&ChainTransaction{},
 	)
 	return err
+}
+
+func SaveWithRetry(db *gorm.DB, value interface{}) error {
+	defaultRetryInterval := 1000
+	maxRetry := 3
+	for i := 0; i < int(maxRetry); i++ {
+		err := db.Save(value).Error
+		if err == nil {
+			return nil
+		}
+		time.Sleep(time.Duration(defaultRetryInterval) * time.Millisecond)
+	}
+	return fmt.Errorf("data failed to save after %d retries: %+v", maxRetry, value)
 }

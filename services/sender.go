@@ -37,3 +37,34 @@ func StartSenderRound(db *gorm.DB) {
 	logrus.WithField("service", "sender").Infof("batch sent %d transaction(s)", len(txs))
 
 }
+
+// temp impl
+// don't actually send but mark as pending
+func StartSenderWorkerRound(ctx *QueueContext, maxBatchSize int) error {
+	var txs = ctx.SendingQueue.MustDequeBatch(maxBatchSize)
+	if len(*txs) == 0 {
+		return nil
+	}
+	backupTxs := *txs
+
+	err := func() error {
+		for i := range *txs {
+			(*txs)[i].TxStatus = utils.TxPoolPending
+		}
+		return ctx.Db.Save(&txs).Error
+	}()
+
+	if err != nil {
+		*txs = backupTxs
+		logrus.WithError(err).Error("Failed to update signed transactions")
+		for _, tx := range *txs {
+			ctx.ErrQueue.MustEnqueWithLog(tx, "Sender", "error saving transaction")
+		}
+		return err
+	}
+	for _, tx := range *txs {
+		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "Sender", "transaction sent")
+	}
+	logrus.WithField("service", "sender").Infof("batch sent %d transaction(s)", len(*txs))
+	return nil
+}

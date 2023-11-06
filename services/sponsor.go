@@ -34,6 +34,17 @@ func StartBalanceCheckRound(db *gorm.DB) {
 	}
 }
 
+func StartBalanceCheckWorkerRound(ctx *QueueContext, maxBatchSize int) error {
+	txs := ctx.BalanceCheckingQueue.MustDequeBatch(maxBatchSize)
+
+	for _, tx := range *txs {
+		// checks balance enough
+		SetGasPrice(&tx)
+		ctx.NonceManagingQueue.MustEnqueWithLog(tx, "BalanceCheck", "moved to GasEnough Queue")
+	}
+	return nil
+}
+
 // sponsor 错误处理
 // func StartSponsorService(db *gorm.DB) {
 // 	errorCodes := []utils.TxErrorCode{utils.TxInternalInsufficientBalance, utils.TxPoolInsufficientBalance}
