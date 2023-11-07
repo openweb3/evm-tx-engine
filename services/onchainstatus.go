@@ -131,8 +131,7 @@ func updateTransactionStatus(db *gorm.DB, tx *models.ChainTransaction) error {
 			// update IsStable
 			tx.IsStable = true
 		}
-		err = db.Save(&tx).Error
-		return err
+		return nil
 	}()
 	if err != nil {
 		*tx = backupTx
@@ -147,34 +146,45 @@ func StartTransactionChainStatusUpdateWorkerRound(ctx *QueueContext, maxBatchSiz
 	// first loop, update transaction status only depending on its chain status
 	// we only need transaction block
 	// TODO: batch get
-	transactions := ctx.PoolOrChainQueue.MustDequeBatch(maxBatchSize)
-	if len(*transactions) == 0 {
+	txs := *ctx.PoolOrChainQueue.MustDequeBatch(maxBatchSize)
+	if len(txs) == 0 {
 		return nil
 	}
-	for _, tx := range *transactions {
-		if !tx.TxStatus.IsSent() {
+	for i := len(txs) - 1; i >= 0; i-- {
+		if !txs[i].TxStatus.IsSent() {
 			panic("unexpected")
 		}
 
 		err := func() error {
-			err := updateTransactionStatus(ctx.Db, &tx)
+			err := updateTransactionStatus(ctx.Db, &txs[i])
 			return err
 		}()
 
 		if err != nil {
-			ctx.ErrQueue.MustEnqueWithLog(tx, "onchainstatus", "error saving transaction")
-			// return err
+			ctx.ErrQueue.MustEnqueWithLog(txs[i], "onchainstatus", "error update transaction")
+			// remove 1 transaction
+			txs = append(txs[:i], txs[i+1:]...)
 			continue
 		}
+	}
 
+	// TODO: second loop, update error transaction status according to same nonce status to check if the transaction is already stable
+
+	// save status
+	err := models.SaveWithRetry(ctx.Db, &txs)
+	if err != nil {
+		logrus.WithError(err).Error("error saving transaction")
+		// return err
+		return err
+	}
+	for _, tx := range txs {
 		if tx.TxStatus.IsStable() {
-			logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Infof("transaction become stable: %s", tx.TxStatus)
+			logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Info("transaction finalized")
 			continue
 		}
-		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "onchainstatus", "watching transaction status")
+		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "onchainstatus", "tx not finalized, watch another round")
 	}
 	return nil
-	// TODO: second loop, update error transaction status according to same nonce status to check if the transaction is already stable
 }
 
 // watch the pending transactions. move them into error states if certain circumstances met

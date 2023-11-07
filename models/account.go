@@ -17,7 +17,7 @@ type Account struct {
 	ChainAccounts []ChainAccount
 	// Alias of the account
 	Alias string `gorm:"type:varchar(255)"`
-	// Status of the account
+	// Status of the account locked,...
 	AccountStatus string `gorm:"type:varchar(255)"`
 	Impl          string `gorm:"type:varchar(255)"` // which implementation should use
 }

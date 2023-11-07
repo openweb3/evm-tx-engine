@@ -54,7 +54,7 @@ func insertTasks(db *gorm.DB) (*[]uint, error) {
 		},
 	}
 	tasks := []uint{}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1000; i++ {
 		taskId, err := routers.CreateNewTask(db, request)
 		if err != nil {
 			return nil, err

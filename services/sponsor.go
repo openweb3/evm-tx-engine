@@ -1,38 +1,8 @@
 package services
 
-import (
-	"github.com/openweb3/evm-tx-engine/models"
-	"github.com/openweb3/evm-tx-engine/utils"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
-)
-
 // temporary implementation
 // BalanceCheck will let transaction pass if balance is enough
 // 目前是个空实现
-func StartBalanceCheckRound(db *gorm.DB) {
-	var txs []models.ChainTransaction
-	err := db.Model(&models.ChainTransaction{}).Preload("Field").Where("tx_status = ?", utils.TxInternalTargetQueue).Find(&txs).Error
-
-	if err != nil {
-		logrus.WithError(err).Error("cannot find txs")
-	}
-
-	if len(txs) == 0 {
-		return
-	}
-
-	for index := range txs {
-		if txs[index].Field.GasLimit != 0 {
-			txs[index].TxStatus = utils.TxInternalGasEnoughQueue
-			logrus.WithField("service", "BalanceCheck").WithField("tx", txs[index].ID).Info("moved to gas enough queue")
-		}
-	}
-	err = db.Save(txs).Error
-	if err != nil {
-		logrus.WithField("service", "BalanceCheck").WithError(err).Error("cannot save txs")
-	}
-}
 
 func StartBalanceCheckWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	txs := ctx.BalanceCheckingQueue.MustDequeBatch(maxBatchSize)

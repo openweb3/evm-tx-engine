@@ -1,5 +1,6 @@
 package utils
 
+// NOTE: in current version task status is not in use
 // TaskStatus is the status used for user interface
 // from the user's perspective, he/she could not know the actual task status from the field, but can somewhat know
 type TaskStatus string

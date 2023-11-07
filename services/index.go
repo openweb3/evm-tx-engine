@@ -3,48 +3,8 @@ package services
 import (
 	"time"
 
-	"github.com/openweb3/evm-tx-engine/utils"
+	"gorm.io/gorm"
 )
-
-// func StartServices(db *gorm.DB) {
-// 	// 500ms as default round interval
-// 	defaultInterval := 100
-// 	go utils.StartService(db, uint(defaultInterval), StartPickerRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartExecutionSimulationRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartBalanceCheckRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartNonceManageRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartPriceManageRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartSigningRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartSenderRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartTaggedBlockNumberUpdateRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartTransactionChainStatusUpdateRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartPendingStatusMoveRound)
-
-// }
-
-// func StartServices(db *gorm.DB) {
-// 	// 500ms as default round interval
-// 	defaultInterval := 100
-// 	go utils.StartService(db, uint(defaultInterval), StartPickerRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartExecutionSimulationRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartBalanceCheckRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartNonceManageRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartPriceManageRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartSigningRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartSenderRound)
-
-// 	go utils.StartService(db, uint(defaultInterval), StartTaggedBlockNumberUpdateRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartTransactionChainStatusUpdateRound)
-// 	go utils.StartService(db, uint(defaultInterval), StartPendingStatusMoveRound)
-
-// }
 
 type workerRound func(ctx *QueueContext, maxSize int) error
 
@@ -55,12 +15,21 @@ func startWorker(ctx *QueueContext, intervalMs uint, maxSize int, workerRoundFun
 	}
 }
 
+type serviceRound func(db *gorm.DB)
+
+func startService(db *gorm.DB, intervalMs uint, roundFunc serviceRound) {
+	for {
+		roundFunc(db)
+		time.Sleep(time.Duration(intervalMs) * time.Millisecond)
+	}
+}
+
 func StartWorkers(ctx *QueueContext) {
 	defaultInterval := 200
-	maxSize := 16
-	go utils.StartService(ctx.Db, uint(defaultInterval), StartTaggedBlockNumberUpdateRound)
+	maxSize := 128
+	go startService(ctx.Db, uint(defaultInterval), StartTaggedBlockNumberUpdateRound)
 
-	go startWorker(ctx, uint(defaultInterval), maxSize, StartPickerRound)
+	go startWorker(ctx, uint(defaultInterval), maxSize, StartPickerWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartExecutionSimulationWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartBalanceCheckWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartNonceManageWorkderRound)
@@ -70,6 +39,7 @@ func StartWorkers(ctx *QueueContext) {
 
 }
 
+// TODO: init queues from database rather than empty queues
 // func InitQueues() {
 // 	queue := goconcurrentqueue.NewFIFO()
 // }

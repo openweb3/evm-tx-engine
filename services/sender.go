@@ -48,20 +48,29 @@ func StartSenderWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	backupTxs := *txs
 
 	err := func() error {
+		// TODO: send transactions to node here
 		for i := range *txs {
 			(*txs)[i].TxStatus = utils.TxPoolPending
 		}
-		return ctx.Db.Save(&txs).Error
+		return nil
 	}()
 
+	// processes sending error
 	if err != nil {
 		*txs = backupTxs
-		logrus.WithError(err).Error("Failed to update signed transactions")
+		logrus.WithError(err).Error("Failed to send transactions")
 		for _, tx := range *txs {
-			ctx.ErrQueue.MustEnqueWithLog(tx, "Sender", "error saving transaction")
+			ctx.ErrQueue.MustEnqueWithLog(tx, "Sender", "error sending transaction")
 		}
 		return err
 	}
+
+	err = models.SaveWithRetry(ctx.Db, &txs)
+	if err != nil {
+		logrus.WithError(err).Error("failed to save transactions")
+		return err
+	}
+
 	for _, tx := range *txs {
 		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "Sender", "transaction sent")
 	}

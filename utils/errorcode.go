@@ -2,6 +2,8 @@ package utils
 
 type TxErrorCode uint
 
+// NOTE: error code is not currently in use
+
 const (
 	TxInternalErrorCode           TxErrorCode = 80100 // General Tx
 	TxInternalInsufficientBalance TxErrorCode = 80101

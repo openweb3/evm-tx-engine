@@ -10,7 +10,7 @@ import (
 
 // pick task and add tx transactions
 // the task should have no related tx
-func StartPickerRound(ctx *QueueContext, maxSize int) error {
+func StartPickerWorkerRound(ctx *QueueContext, maxSize int) error {
 	var tasks []models.Task
 	pageSize := maxSize
 
@@ -57,10 +57,10 @@ func StartPickerRound(ctx *QueueContext, maxSize int) error {
 		}
 
 		// 将交易保存到数据库
-		err := ctx.Db.Save(&tx).Error
+		err := models.SaveWithRetry(ctx.Db, &tx)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to create tx")
-			return err
+			continue
 		}
 		ctx.TargetQueue.MustEnqueWithLog(tx, "Picker", fmt.Sprintf("transaction created for task %d", task.ID))
 	}

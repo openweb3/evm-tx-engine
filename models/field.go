@@ -4,7 +4,6 @@ import "gorm.io/gorm"
 
 type Field struct {
 	gorm.Model
-	// ID uint   `gorm:"primarykey"`
 	To string `gorm:"type:varchar(255)"`
 	// Function      string             `gorm:"type:varchar(255)"`
 	// Params        []string           `gorm:"type:json"`

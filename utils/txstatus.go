@@ -4,6 +4,7 @@ import "fmt"
 
 type TxStatus string
 
+// NOTE: in current version, tx_status is not fully in use
 const (
 	TxInternalTargetQueue    TxStatus = "TARGET_QUEUE"
 	TxInternalGasEnoughQueue TxStatus = "GAS_ENOUGH_QUEUE"

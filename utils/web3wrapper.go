@@ -14,7 +14,7 @@ type TaggedBlockNumbers struct {
 }
 
 type TxResultMeta struct {
-	BlockNumber *hexutil.Big // which block transactionv is in
+	BlockNumber *hexutil.Big // which block transaction is in. nil if transaction is not contained in any block
 	Status      uint8        // status field of transaction receipt
 }
 
