@@ -13,5 +13,5 @@ func initGin() *gin.Engine {
 
 func main() {
 	initGin()
-	fmt.Println("Hello, World!")
+	fmt.Println("evm tx engine, start!")
 }
