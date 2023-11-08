@@ -1,11 +1,13 @@
 package models
 
-import "github.com/openweb3/evm-tx-engine/utils"
+import (
+	"github.com/openweb3/evm-tx-engine/utils"
+)
 
 // Chain struct defines the fields of a chain
 type Chain struct {
 	ID   uint   `gorm:"primaryKey"` // 先只考虑是primary key
-	Type string `gorm:"type:varchar(255)"`
+	Type string `gorm:"primaryKey;type:varchar(255)"`
 	// Name of the chain
 	Name string `gorm:"type:varchar(255)"`
 	// Boolean value to indicate if the chain is a testnet
