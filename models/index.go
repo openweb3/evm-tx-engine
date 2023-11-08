@@ -35,7 +35,6 @@ func Migrate(db *gorm.DB) error {
 		&Account{},
 		&ChainAccount{},
 		&Task{},
-		&Field{},
 		&ChainTransaction{},
 	)
 	return err

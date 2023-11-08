@@ -32,7 +32,7 @@ func StartWorkers(ctx *QueueContext) {
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartPickerWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartExecutionSimulationWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartBalanceCheckWorkerRound)
-	go startWorker(ctx, uint(defaultInterval), maxSize, StartNonceManageWorkderRound)
+	go startWorker(ctx, uint(defaultInterval), maxSize, StartNonceManageWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartSigningWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartSenderWorkerRound)
 	go startWorker(ctx, uint(defaultInterval), maxSize, StartTransactionChainStatusUpdateWorkerRound)

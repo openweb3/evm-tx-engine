@@ -1,9 +1,6 @@
 package models
 
-import "gorm.io/gorm"
-
 type Field struct {
-	gorm.Model
 	To string `gorm:"type:varchar(255)"`
 	// Function      string             `gorm:"type:varchar(255)"`
 	// Params        []string           `gorm:"type:json"`

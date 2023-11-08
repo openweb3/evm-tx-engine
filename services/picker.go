@@ -34,7 +34,7 @@ func StartPickerWorkerRound(ctx *QueueContext, maxSize int) error {
 	// =================================
 	// First of all use a simple implementation here
 	// search all tasks with no chain_transaction and then add a transaction for the task
-	ctx.Db.Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.task_id = tasks.ID)").Preload("Field").Limit(pageSize).Find(&tasks)
+	ctx.Db.Where("NOT EXISTS (SELECT 1 FROM chain_transactions WHERE chain_transactions.task_id = tasks.ID)").Limit(pageSize).Find(&tasks)
 
 	for _, task := range tasks {
 		// 为任务创建一个新的 ChainTransaction

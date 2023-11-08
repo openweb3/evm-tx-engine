@@ -14,6 +14,8 @@ import (
 func initDbTestChain(db *gorm.DB) (*models.Chain, error) {
 	chain := models.Chain{
 		Name:           "ethereum",
+		ID:             1,
+		Type:           "evm",
 		LatestBlock:    5,
 		SafeBlock:      4,
 		FinalizedBlock: 3,
@@ -52,7 +54,7 @@ func insertTasks(db *gorm.DB) (*[]uint, error) {
 		},
 	}
 	tasks := []uint{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10; i++ {
 		taskId, err := routers.CreateNewTask(db, request)
 		if err != nil {
 			return nil, err

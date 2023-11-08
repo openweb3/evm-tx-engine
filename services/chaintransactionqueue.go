@@ -29,20 +29,11 @@ func (queue *ChainTransactionQueue) Deque() (models.ChainTransaction, error) {
 		// should never happen
 		panic("element type unexpected")
 	}
-	// check again to ensure data validity
-	// could remove if there would be urgent performance requirements
-	if tx_.Field.ID == 0 {
-		// should never happen
-		panic("element's Field is not attached")
-	}
 	return tx_, nil
 }
 
 func (queue *ChainTransactionQueue) Enque(tx models.ChainTransaction) error {
 	// transaction field should be attached to the transactions
-	if tx.Field.ID == 0 {
-		return errors.New("element's Field is not attached")
-	}
 	if tx.ID == 0 {
 		return errors.New("transaction should have an attached id")
 	}
@@ -73,11 +64,15 @@ func (queue *ChainTransactionQueue) MustDequeBatch(maxSize int) *[]models.ChainT
 
 // This function won't operate db
 // Enque returning an error means the data is not valid
+// This function enqueues a transaction and logs the result
 func (destQueue *ChainTransactionQueue) MustEnqueWithLog(tx models.ChainTransaction, workerName, successLog string) {
+	// Attempt to enqueue the transaction
 	err := destQueue.Enque(tx)
+	// If an error occurs, log the error and return
 	if err != nil {
-		logrus.WithField("txId", tx.ID).WithField("fieldId", tx.Field.ID).WithField("worker", workerName).WithError(err).Error("failed to enqueue transaction")
+		logrus.WithField("txId", tx.ID).WithField("worker", workerName).WithError(err).Fatal("failed to enqueue transaction")
 		return
 	}
+	// Otherwise, log the success log
 	logrus.WithField("txId", tx.ID).WithField("service", workerName).Info(successLog)
 }

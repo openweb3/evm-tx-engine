@@ -18,8 +18,7 @@ type ChainTransaction struct {
 	TxStatus            utils.TxStatus `gorm:"type:varchar(255)"` // Transaction Stage
 	ErrorMessage        string         `gorm:"type:varchar(255)"` // Error of the transaction(if met)
 	ErrorCode           string         `gorm:"type:varchar(255)"`
-	FieldId             uint
-	Field               Field `gorm:"foreignKey:FieldId"`
+	Field
 }
 
 func FetchChainTransactionStatusAndStabilityFromChain(db *gorm.DB, chainTransaction *ChainTransaction) (utils.TxStatus, bool, error) {

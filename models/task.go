@@ -22,8 +22,7 @@ type Task struct {
 	RetryInterval    int                `gorm:"type:int"`
 	History          []ChainTransaction `gorm:"foreignKey:TaskId"` // Assuming HistoryItem is another struct
 
-	FieldId int   `gorm:"type:uint"`
-	Field   Field `gorm:"foreignKey:FieldId"`
+	Field
 	// FieldTo   string `gorm:"type:varchar(255)"`
 	// FieldData string `gorm:"type:varchar(255)"`
 }

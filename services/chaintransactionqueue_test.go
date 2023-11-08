@@ -33,10 +33,6 @@ func TestDeque(t *testing.T) {
 		Model: gorm.Model{
 			ID: 1,
 		},
-		Field: models.Field{
-			Model: gorm.Model{
-				ID: 1,
-			}},
 	} // Adjust this based on your model
 	err = queue.Enque(tx)
 	assert.NoError(t, err)
@@ -58,10 +54,6 @@ func TestEnque(t *testing.T) {
 		Model: gorm.Model{
 			ID: 1,
 		},
-		Field: models.Field{
-			Model: gorm.Model{
-				ID: 1,
-			}},
 	} // Adjust this based on your model
 	err = queue.Enque(validTx)
 	assert.NoError(t, err)
@@ -80,10 +72,6 @@ func TestMustDequeBatch(t *testing.T) {
 			Model: gorm.Model{
 				ID: uint(i),
 			},
-			Field: models.Field{
-				Model: gorm.Model{
-					ID: uint(i),
-				}},
 		}
 		queue.Enque(tx)
 	}
