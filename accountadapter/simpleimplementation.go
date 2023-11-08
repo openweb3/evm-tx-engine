@@ -71,9 +71,9 @@ func (s *SimpleAccountAdapter) GetAccounts(chain string) ([]models.Account, erro
 
 	ethAccounts := s.keystore.Accounts()
 	var accounts []models.Account
-	for _, acc := range ethAccounts {
+	for range ethAccounts {
 		accounts = append(accounts, models.Account{
-			Address: acc.Address.Hex(),
+			// Address: acc.Address.Hex(),
 			// ... other fields, you might want to store additional metadata separately.
 		})
 	}

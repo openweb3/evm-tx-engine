@@ -27,9 +27,7 @@ func initDbTestChain(db *gorm.DB) (*models.Chain, error) {
 
 func initDbTestAccount(db *gorm.DB, chain *models.Chain) (*models.Account, error) {
 	address := "0x000000000000000000000000"
-	account := models.Account{
-		Address: address,
-	}
+	account := models.Account{}
 	err := db.Preload("ChainAccounts").First(&account).Error
 	if err == gorm.ErrRecordNotFound || account.ChainAccounts == nil {
 		account.ChainAccounts = []models.ChainAccount{

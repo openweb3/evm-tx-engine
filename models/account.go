@@ -9,8 +9,6 @@ import (
 // Account struct defines the fields of an account
 type Account struct {
 	gorm.Model
-	// Address of the account
-	Address string `gorm:"type:varchar(255)"`
 	// Public key of the account
 	PublicKey string `gorm:"type:varchar(255)"`
 	// Chains the account is associated with
@@ -20,6 +18,11 @@ type Account struct {
 	// Status of the account locked,...
 	AccountStatus string `gorm:"type:varchar(255)"`
 	Impl          string `gorm:"type:varchar(255)"` // which implementation should use
+}
+
+// return ethaddress from public key
+func (acct *Account) EthAddress() (string, error) {
+	return "", nil
 }
 
 // 写竞争： Sponsor Update & Nonce Update. 但修改的不是同一字段，可能没有竞争？
