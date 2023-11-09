@@ -34,7 +34,8 @@ type ChainAccount struct {
 	// Address of the chain account
 	Address             string `gorm:"type:varchar(255)"`
 	ChainId             uint   `gorm:"type:int"` // the internal ChainId
-	Chain               Chain  `gorm:"foreignKey:ChainId"`
+	ChainType           string `gorm:"type:varchar(255)"`
+	Chain               Chain  `gorm:"foreignKey:ChainId,ChainType;References:ID,Type"`
 	LastSponsorInit     time.Time
 	LastSponsorReceived time.Time
 	// internal transaction count
