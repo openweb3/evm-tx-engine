@@ -4,5 +4,6 @@
 
 ### Setup
 
+### Check before production
 
-
+migrate `panic` to `logrus.Fatal`
