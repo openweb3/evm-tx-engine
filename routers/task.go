@@ -3,6 +3,7 @@ package routers
 import (
 	"fmt"
 
+	"github.com/holiman/uint256"
 	"github.com/openweb3/evm-tx-engine/models"
 	"gorm.io/gorm"
 )
@@ -19,7 +20,7 @@ type TaskRequest struct {
 type Fields struct {
 	To           string `json:"to"`
 	Data         []byte `json:"data"`
-	MaxFeePerGas uint   `json:"maxFeePerGas"`
+	MaxFeePerGas string `json:"maxFeePerGas"`
 	// Function  string        `json:"function"`
 	// Params    []interface{} `json:"params"`
 }
@@ -63,12 +64,16 @@ func CreateNewTask(db *gorm.DB, taskRequest TaskRequest) (uint, error) {
 	if err != nil {
 		return 0, fmt.Errorf("chain account %s %s not found", taskRequest.Chain, taskRequest.From)
 	}
+	maxFeePerGas, err := uint256.FromDecimal(taskRequest.Fields.MaxFeePerGas)
+	if err != nil {
+		return 0, fmt.Errorf("invalid maxFeePerGas: %s", taskRequest.Fields.MaxFeePerGas)
+	}
 	task := models.Task{
 		From: chainAccount,
 		Field: models.Field{
 			To:           taskRequest.Fields.To,
 			Data:         taskRequest.Fields.Data,
-			MaxFeePerGas: taskRequest.Fields.MaxFeePerGas,
+			MaxFeePerGas: maxFeePerGas,
 		},
 	}
 	err = db.Create(&task).Error

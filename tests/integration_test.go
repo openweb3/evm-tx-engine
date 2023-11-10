@@ -50,7 +50,8 @@ func insertTasks(db *gorm.DB) (*[]uint, error) {
 		Chain: "ethereum",
 		From:  "0x000000000000000000000000",
 		Fields: routers.Fields{
-			To: "0x000000000000000000000001",
+			To:           "0x000000000000000000000001",
+			MaxFeePerGas: "100000000000000",
 		},
 	}
 	tasks := []uint{}

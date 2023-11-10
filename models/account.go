@@ -39,8 +39,8 @@ type ChainAccount struct {
 	LastSponsorInit     time.Time
 	LastSponsorReceived time.Time
 	// internal transaction count
-	InternalNonce  uint  `gorm:"type:int"`
-	LatestNonce    *uint `gorm:"type:int"`
-	SafeNonce      *uint `gorm:"type:int"`
-	FinalizedNonce *uint `gorm:"type:int"`
+	InternalNonce  uint64  `gorm:"type:int"`
+	LatestNonce    *uint64 `gorm:"type:int"`
+	SafeNonce      *uint64 `gorm:"type:int"`
+	FinalizedNonce *uint64 `gorm:"type:int"`
 }

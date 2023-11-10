@@ -1,6 +1,6 @@
 package utils
 
-type TxErrorCode uint
+type TxErrorCode uint64
 
 // NOTE: error code is not currently in use
 

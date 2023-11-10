@@ -13,13 +13,13 @@ type Task struct {
 	TaskStatus    string       `gorm:"type:varchar(255)"`
 	Fee           string       `gorm:"type:varchar(255)"`
 	Hash          string       `gorm:"type:varchar(255)"`
-	PreviousTask  int          `gorm:"type:varchar(255)"`
+	PreviousTask  uint64       `gorm:"type:varchar(255)"`
 	PriceStrategy string       `gorm:"type:varchar(255)"`
-	Priority      int          `gorm:"type:int"`
+	Priority      uint64       `gorm:"type:int"`
 
-	RetryMaxAttempts int                `gorm:"type:int"`
-	RetryDeadline    int64              `gorm:"type:bigint"`
-	RetryInterval    int                `gorm:"type:int"`
+	RetryMaxAttempts uint64             `gorm:"type:int"`
+	RetryDeadline    uint64             `gorm:"type:bigint"`
+	RetryInterval    uint64             `gorm:"type:int"`
 	History          []ChainTransaction `gorm:"foreignKey:TaskId"` // Assuming HistoryItem is another struct
 
 	Field

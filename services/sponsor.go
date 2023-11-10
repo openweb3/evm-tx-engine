@@ -9,7 +9,11 @@ func StartBalanceCheckWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 
 	for _, tx := range *txs {
 		// checks balance enough
-		SetGasPrice(&tx)
+		err := SetGasPrice(&tx)
+		if err != nil {
+			ctx.BalanceCheckingQueue.MustEnqueWithLog(tx, "BalanceCheck", err.Error())
+			continue
+		}
 		ctx.NonceManagingQueue.MustEnqueWithLog(tx, "BalanceCheck", "moved to GasEnough Queue")
 	}
 	return nil
