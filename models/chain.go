@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/openweb3/evm-tx-engine/types"
 )
 
 // Chain struct defines the fields of a chain
@@ -17,8 +17,8 @@ type Chain struct {
 	FinalizedBlock uint64 `gorm:"type:int"`
 }
 
-func (chain *Chain) GetTaggedBlockNumbers() utils.TaggedBlockNumbers {
-	return utils.TaggedBlockNumbers{
+func (chain *Chain) GetTaggedBlockNumbers() types.TaggedBlockNumbers {
+	return types.TaggedBlockNumbers{
 		LatestBlock:    chain.LatestBlock,
 		SafeBlock:      chain.SafeBlock,
 		FinalizedBlock: chain.FinalizedBlock,

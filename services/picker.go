@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/openweb3/evm-tx-engine/models"
-	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/openweb3/evm-tx-engine/types/code"
 	"github.com/sirupsen/logrus"
 )
 
@@ -44,7 +44,7 @@ func StartPickerWorkerRound(ctx *QueueContext, maxSize int) error {
 		tx := models.ChainTransaction{
 			TaskId:              task.ID,
 			IsCancelTransaction: false,
-			TxStatus:            utils.TxInternalTargetQueue,
+			TxStatus:            code.TxInternalTargetQueue,
 			Field: models.Field{
 				To:                task.Field.To,
 				MaxFeePerGas:      task.Field.MaxFeePerGas,

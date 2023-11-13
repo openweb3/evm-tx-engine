@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/openweb3/evm-tx-engine/models"
-	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/openweb3/evm-tx-engine/types/code"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ import (
 func StartSenderRound(db *gorm.DB) {
 	var txs []models.ChainTransaction
 
-	err := db.Model(&models.ChainTransaction{}).Joins("Field").Where("tx_status = ? AND raw IS not NULL", utils.TxInternalSigned).Find(&txs).Error
+	err := db.Model(&models.ChainTransaction{}).Joins("Field").Where("tx_status = ? AND raw IS not NULL", code.TxInternalSigned).Find(&txs).Error
 
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get signed transactions")
@@ -27,7 +27,7 @@ func StartSenderRound(db *gorm.DB) {
 	}
 
 	for i := range txs {
-		txs[i].TxStatus = utils.TxPoolPending
+		txs[i].TxStatus = code.TxPoolPending
 	}
 	err = db.Save(&txs).Error
 	if err != nil {
@@ -50,7 +50,7 @@ func StartSenderWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	err := func() error {
 		// TODO: send transactions to node here
 		for _, tx := range txs {
-			tx.TxStatus = utils.TxPoolPending
+			tx.TxStatus = code.TxPoolPending
 		}
 		return nil
 	}()

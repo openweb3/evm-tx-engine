@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/openweb3/evm-tx-engine/models"
-	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/openweb3/evm-tx-engine/types/code"
 	"gorm.io/gorm"
 )
 
@@ -48,7 +48,7 @@ func SetTransactionNonce(db *gorm.DB, tx *models.ChainTransaction) error {
 		// set the new nonce
 		newNonce := fromAccount.InternalNonce
 		tx.Field.Nonce = &newNonce
-		tx.TxStatus = utils.TxInternalConstructed
+		tx.TxStatus = code.TxInternalConstructed
 		// update the fromAccount internal nonce
 		// TODO: should lock fromAccount if multiple workers are working
 		fromAccount.InternalNonce = fromAccount.InternalNonce + 1

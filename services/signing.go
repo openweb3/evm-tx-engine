@@ -3,7 +3,7 @@ package services
 import (
 	"github.com/openweb3/evm-tx-engine/accountadapter"
 	"github.com/openweb3/evm-tx-engine/models"
-	"github.com/openweb3/evm-tx-engine/utils"
+	"github.com/openweb3/evm-tx-engine/types/code"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -45,7 +45,7 @@ func StartSigningWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 			return err
 		}
 		for _, tx := range txs {
-			tx.TxStatus = utils.TxInternalSigned
+			tx.TxStatus = code.TxInternalSigned
 		}
 		return nil
 	}()

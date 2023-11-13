@@ -4,19 +4,9 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/openweb3/evm-tx-engine/types"
 	"github.com/openweb3/web3go"
 )
-
-type TaggedBlockNumbers struct {
-	LatestBlock    uint64
-	SafeBlock      uint64
-	FinalizedBlock uint64
-}
-
-type TxResultMeta struct {
-	BlockNumber *hexutil.Big // which block transaction is in. nil if transaction is not contained in any block
-	Status      uint8        // status field of transaction receipt
-}
 
 // NOTE: web3 wrapper should not rely any other package to prevent cycle refer
 
@@ -31,18 +21,18 @@ func GetWeb3Client(chain string) (*web3go.Client, error) {
 }
 
 // return latest, safe, finalized block number
-func (w3 *Web3Wrapper) GetTaggedBlockNumbers(chain string) (TaggedBlockNumbers, error) {
-	return TaggedBlockNumbers{
-		30, 20, 10,
+func (w3 *Web3Wrapper) GetTaggedBlockNumbers(chain string) (types.TaggedBlockNumbers, error) {
+	return types.TaggedBlockNumbers{
+		LatestBlock: 30, SafeBlock: 20, FinalizedBlock: 10,
 	}, nil
 }
 
 // nil if transaction is not on chain
 // Returns transaction block number and status field
-func (w3 *Web3Wrapper) GetTransactionResult(chain string, txHash string) (TxResultMeta, error) {
+func (w3 *Web3Wrapper) GetTransactionResult(chain string, txHash string) (types.TxResultMeta, error) {
 	blockNumber := big.NewInt(0)
 
-	return TxResultMeta{
-		(*hexutil.Big)(blockNumber), 0,
+	return types.TxResultMeta{
+		BlockNumber: (*hexutil.Big)(blockNumber), Status: 0,
 	}, nil
 }

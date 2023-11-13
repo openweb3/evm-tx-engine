@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/openweb3/evm-tx-engine/models"
+	"github.com/openweb3/evm-tx-engine/types"
 	"github.com/openweb3/evm-tx-engine/utils"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -73,7 +74,7 @@ func StartTransactionChainStatusUpdateRound(db *gorm.DB) {
 			tx.BlockNumber = &blockNumber
 		}
 
-		txNewStatus, err := utils.InferSentTransactionStatus(meta, tx.TxStatus, fromAccount.Chain.GetTaggedBlockNumbers())
+		txNewStatus, err := types.InferSentTransactionStatus(meta, tx.TxStatus, fromAccount.Chain.GetTaggedBlockNumbers())
 		if err != nil {
 			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to infer transaction status")
 			return
@@ -93,7 +94,7 @@ func StartTransactionChainStatusUpdateRound(db *gorm.DB) {
 			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to update transaction status")
 			return
 		}
-		logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Infof("transaction status updated to %s", tx.TxStatus)
+		logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Infof("transaction status updated to %d", tx.TxStatus)
 	}
 	// TODO: second loop, update error transaction status according to same nonce status to check if the transaction is already stable
 }
@@ -117,7 +118,7 @@ func updateTransactionStatus(db *gorm.DB, tx *models.ChainTransaction) error {
 			tx.BlockNumber = &blockNumber
 		}
 
-		txNewStatus, err := utils.InferSentTransactionStatus(meta, tx.TxStatus, fromAccount.Chain.GetTaggedBlockNumbers())
+		txNewStatus, err := types.InferSentTransactionStatus(meta, tx.TxStatus, fromAccount.Chain.GetTaggedBlockNumbers())
 		if err != nil {
 			return errors.New("failed to infer transaction status")
 		}
