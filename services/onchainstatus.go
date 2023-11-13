@@ -85,10 +85,10 @@ func StartTransactionChainStatusUpdateRound(db *gorm.DB) {
 		// update status
 		tx.TxStatus = txNewStatus
 		// tx might be also stable if conflict nonce tx is finalized
-		if tx.TxStatus.IsStable() {
-			// update IsStable
-			tx.IsStable = true
-		}
+		// if tx.TxStatus.IsStable() {
+		// 	// update IsStable
+		// 	tx.IsStable = true
+		// }
 		err = db.Save(&tx).Error
 		if err != nil {
 			logrus.WithField("txId", tx.ID).WithError(err).Errorf("failed to update transaction status")
@@ -128,10 +128,10 @@ func updateTransactionStatus(db *gorm.DB, tx *models.ChainTransaction) error {
 		// update status
 		tx.TxStatus = txNewStatus
 		// tx might be also stable if conflict nonce tx is finalized
-		if tx.TxStatus.IsStable() {
-			// update IsStable
-			tx.IsStable = true
-		}
+		// if tx.TxStatus.IsStable() {
+		// 	// update IsStable
+		// 	tx.IsStable = true
+		// }
 		return nil
 	}()
 	if err != nil {
