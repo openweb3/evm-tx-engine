@@ -45,7 +45,7 @@ func StartSigningWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 			return err
 		}
 		for _, tx := range txs {
-			tx.TxStatus = code.TxInternalSigned
+			tx.TxStatus = code.TxInternalSending
 		}
 		return nil
 	}()

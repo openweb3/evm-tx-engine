@@ -48,7 +48,7 @@ func SetTransactionNonce(db *gorm.DB, tx *models.ChainTransaction) error {
 		// set the new nonce
 		newNonce := fromAccount.InternalNonce
 		tx.Field.Nonce = &newNonce
-		tx.TxStatus = code.TxInternalConstructed
+		tx.TxStatus = code.TxInternalSigning
 		// update the fromAccount internal nonce
 		// TODO: should lock fromAccount if multiple workers are working
 		fromAccount.InternalNonce = fromAccount.InternalNonce + 1

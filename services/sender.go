@@ -15,7 +15,7 @@ import (
 func StartSenderRound(db *gorm.DB) {
 	var txs []models.ChainTransaction
 
-	err := db.Model(&models.ChainTransaction{}).Joins("Field").Where("tx_status = ? AND raw IS not NULL", code.TxInternalSigned).Find(&txs).Error
+	err := db.Model(&models.ChainTransaction{}).Joins("Field").Where("tx_status = ? AND raw IS not NULL", code.TxInternalSending).Find(&txs).Error
 
 	if err != nil {
 		logrus.WithError(err).Error("Failed to get signed transactions")

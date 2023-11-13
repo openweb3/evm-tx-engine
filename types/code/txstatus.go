@@ -3,33 +3,36 @@ package code
 type TxStatus uint
 
 const (
-	TxInternalTargetQueue    TxStatus = 80100
-	TxInternalGasEnoughQueue TxStatus = 80200
-	TxInternalConstructed    TxStatus = 80300
-	TxInternalSigned         TxStatus = 80400
-	TxInternalError          TxStatus = 80500
+	TxInternalTargetQueue     TxStatus = 80100
+	TxInternalBalanceChecking TxStatus = 80200
+	TxInternalNonceManaging   TxStatus = 80300
+	TxInternalSigning         TxStatus = 80400
+	TxInternalSending         TxStatus = 80500
+	TxInternalError           TxStatus = 80900
 
 	TxPoolPending TxStatus = 81100
-	TxPoolError   TxStatus = 81200
+	TxPoolError   TxStatus = 81900
 
 	TxChainLatest         TxStatus = 82100
-	TxChainLatestError    TxStatus = 82101
+	TxChainLatestError    TxStatus = 82109
 	TxChainSafe           TxStatus = 82200
-	TxChainSafeError      TxStatus = 82201
+	TxChainSafeError      TxStatus = 82209
 	TxChainFinalized      TxStatus = 82300
-	TxChainFinalizedError TxStatus = 82301
+	TxChainFinalizedError TxStatus = 82309
 )
 
 func (ts TxStatus) Name() string {
 	switch ts {
 	case TxInternalTargetQueue:
 		return "TARGET_QUEUE"
-	case TxInternalGasEnoughQueue:
-		return "GAS_ENOUGH_QUEUE"
-	case TxInternalConstructed:
-		return "CONSTRUCTED"
-	case TxInternalSigned:
-		return "SIGNED"
+	case TxInternalBalanceChecking:
+		return "BALANCE_CHECKING"
+	case TxInternalNonceManaging:
+		return "NONCE_MANAGING"
+	case TxInternalSigning:
+		return "SIGNING"
+	case TxInternalSending:
+		return "SENDING"
 	case TxInternalError:
 		return "INTERNAL_ERROR"
 	case TxPoolPending:
@@ -90,7 +93,7 @@ func (status TxStatus) IsError() bool {
 
 // Transaction is not sent to the pool
 func (status TxStatus) IsInternal() bool {
-	return status == TxInternalTargetQueue || status == TxInternalGasEnoughQueue || status == TxInternalConstructed || status == TxInternalSigned || status == TxInternalError
+	return status == TxInternalTargetQueue || status == TxInternalNonceManaging || status == TxInternalSigning || status == TxInternalSending || status == TxInternalError
 }
 
 func (status TxStatus) IsInPool() bool {
