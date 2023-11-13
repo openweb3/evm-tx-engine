@@ -146,7 +146,7 @@ func StartTransactionChainStatusUpdateWorkerRound(ctx *QueueContext, maxBatchSiz
 	// first loop, update transaction status only depending on its chain status
 	// we only need transaction block
 	// TODO: batch get
-	txs := *ctx.PoolOrChainQueue.MustDequeBatch(maxBatchSize)
+	txs := ctx.PoolOrChainQueue.MustDequeBatch(maxBatchSize)
 	if len(txs) == 0 {
 		return nil
 	}
@@ -156,12 +156,12 @@ func StartTransactionChainStatusUpdateWorkerRound(ctx *QueueContext, maxBatchSiz
 		}
 
 		err := func() error {
-			err := updateTransactionStatus(ctx.Db, &txs[i])
+			err := updateTransactionStatus(ctx.Db, txs[i])
 			return err
 		}()
 
 		if err != nil {
-			ctx.ErrQueue.MustEnqueWithLog(txs[i], "onchainstatus", "error update transaction")
+			ctx.ErrQueue.MustEnqueWithLog(*txs[i], "onchainstatus", "error update transaction")
 			// remove 1 transaction
 			txs = append(txs[:i], txs[i+1:]...)
 			continue
@@ -182,7 +182,7 @@ func StartTransactionChainStatusUpdateWorkerRound(ctx *QueueContext, maxBatchSiz
 			logrus.WithField("txId", tx.ID).WithField("service", "onchainstatus").Info("transaction finalized")
 			continue
 		}
-		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "onchainstatus", "tx not finalized, watch another round")
+		ctx.PoolOrChainQueue.MustEnqueWithLog(*tx, "onchainstatus", "tx not finalized, watch another round")
 	}
 	return nil
 }

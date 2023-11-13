@@ -7,14 +7,14 @@ package services
 func StartBalanceCheckWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	txs := ctx.BalanceCheckingQueue.MustDequeBatch(maxBatchSize)
 
-	for _, tx := range *txs {
+	for _, tx := range txs {
 		// checks balance enough
-		err := SetGasPrice(&tx)
+		err := SetGasPrice(tx)
 		if err != nil {
-			ctx.BalanceCheckingQueue.MustEnqueWithLog(tx, "BalanceCheck", err.Error())
+			ctx.BalanceCheckingQueue.MustEnqueWithLog(*tx, "BalanceCheck", err.Error())
 			continue
 		}
-		ctx.NonceManagingQueue.MustEnqueWithLog(tx, "BalanceCheck", "moved to GasEnough Queue")
+		ctx.NonceManagingQueue.MustEnqueWithLog(*tx, "BalanceCheck", "moved to GasEnough Queue")
 	}
 	return nil
 }

@@ -47,19 +47,19 @@ func (queue *ChainTransactionQueue) Enque(tx models.ChainTransaction) error {
 
 // DequeBatch returns a slice of transactions from the queue, with maxSize limit
 // might return empty array with 0 elements
-func (queue *ChainTransactionQueue) MustDequeBatch(maxSize int) *[]models.ChainTransaction {
-	var transactions []models.ChainTransaction = make([]models.ChainTransaction, 0, maxSize)
+func (queue *ChainTransactionQueue) MustDequeBatch(maxSize int) []*models.ChainTransaction {
+	var transactions []*models.ChainTransaction = make([]*models.ChainTransaction, 0, maxSize)
 
 	for i := 0; i < maxSize; i++ {
 
 		if tx, err := queue.Deque(); err == nil {
-			transactions = append(transactions, tx)
+			transactions = append(transactions, &tx)
 		} else {
 			// err means queue is already empty
 			break
 		}
 	}
-	return &transactions
+	return transactions
 }
 
 // This function won't operate db
@@ -75,4 +75,18 @@ func (destQueue *ChainTransactionQueue) MustEnqueWithLog(tx models.ChainTransact
 	}
 	// Otherwise, log the success log
 	logrus.WithField("txId", tx.ID).WithField("service", workerName).Info(successLog)
+}
+
+func backupChainTransactions(input []*models.ChainTransaction) []*models.ChainTransaction {
+	var result []*models.ChainTransaction
+	for _, ptr := range input {
+		// 检查空指针以避免解引用时发生运行时错误。
+		if ptr != nil {
+			value := *ptr
+			result = append(result, &value)
+		} else {
+			result = append(result, nil)
+		}
+	}
+	return result
 }

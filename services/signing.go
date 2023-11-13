@@ -8,39 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// pop a batch of transactions from constructed, and send them to the signing service. Modify the `Raw` field and modify the status field
-func StartSigningRound(db *gorm.DB) {
-	var txs []models.ChainTransaction
-	db.Where("tx_status = ? AND raw IS NULL", utils.TxInternalConstructed).Find(&txs)
-	// will modify txs
-	if len(txs) == 0 {
-		return
-	}
-	err := batchSign(db, &txs)
-	if err != nil {
-		// do something
-		logrus.WithField("service", "signing").WithError(err).Error("error signing transaction")
-		return
-	}
-	for i := range txs {
-		txs[i].TxStatus = utils.TxInternalSigned
-	}
-	err = db.Save(&txs).Error
-	if err != nil {
-		logrus.WithField("service", "signing").WithError(err).Error("Error saving transaction")
-		return
-	}
-	logrus.WithField("service", "signing").Infof("batch signed %d transaction(s)", len(txs))
-
-}
-
-func batchSign(db *gorm.DB, txs *[]models.ChainTransaction) error {
-	for i := range *txs {
-		txReadyToSign, err := (*txs)[i].PrepareTransactionToSign()
+func batchSign(db *gorm.DB, txs []*models.ChainTransaction) error {
+	for _, tx := range txs {
+		txReadyToSign, err := tx.PrepareTransactionToSign()
 		if err != nil {
 			return err
 		}
-		fromAccount, err := (*txs)[i].GetTransactionFrom(db)
+		fromAccount, err := tx.GetTransactionFrom(db)
 		if err != nil {
 			return err
 		}
@@ -50,7 +24,7 @@ func batchSign(db *gorm.DB, txs *[]models.ChainTransaction) error {
 		if err != nil {
 			return err
 		}
-		(*txs)[i].Raw = &signed
+		tx.Raw = &signed
 	}
 	return nil
 }
@@ -58,11 +32,11 @@ func batchSign(db *gorm.DB, txs *[]models.ChainTransaction) error {
 // TODO: batch save
 func StartSigningWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	txs := ctx.SigningQueue.MustDequeBatch(maxBatchSize)
-	if len(*txs) == 0 {
+	if len(txs) == 0 {
 		return nil
 	}
 
-	backupTxs := *txs
+	backupTxs := backupChainTransactions(txs)
 
 	// sign transaction operations
 	err := func() error {
@@ -70,18 +44,18 @@ func StartSigningWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 		if err != nil {
 			return err
 		}
-		for i := range *txs {
-			(*txs)[i].TxStatus = utils.TxInternalSigned
+		for _, tx := range txs {
+			tx.TxStatus = utils.TxInternalSigned
 		}
 		return nil
 	}()
 
 	// recover signing errors
 	if err != nil {
-		*txs = backupTxs
+		txs = backupTxs
 		logrus.WithField("service", "signing").WithError(err).Error("Error signing transaction")
-		for _, tx := range *txs {
-			ctx.ErrQueue.MustEnqueWithLog(tx, "SigningService", "error saving transaction")
+		for _, tx := range txs {
+			ctx.ErrQueue.MustEnqueWithLog(*tx, "SigningService", "error saving transaction")
 		}
 		return err
 	}
@@ -93,8 +67,8 @@ func StartSigningWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 		return err
 	}
 
-	for _, tx := range *txs {
-		ctx.SendingQueue.MustEnqueWithLog(tx, "SigningService", "transaction signed")
+	for _, tx := range txs {
+		ctx.SendingQueue.MustEnqueWithLog(*tx, "SigningService", "transaction signed")
 	}
 	return nil
 }

@@ -64,7 +64,7 @@ func TestMustDequeBatch(t *testing.T) {
 
 	// Test dequeue batch from empty queue
 	txs := queue.MustDequeBatch(5)
-	assert.Equal(t, 0, len(*txs))
+	assert.Equal(t, 0, len(txs))
 
 	// Enqueue some transactions
 	for i := 1; i <= 10; i++ {
@@ -78,9 +78,9 @@ func TestMustDequeBatch(t *testing.T) {
 
 	// Test dequeue batch with maxSize less than available elements
 	txs = queue.MustDequeBatch(5)
-	assert.Equal(t, 5, len(*txs))
+	assert.Equal(t, 5, len(txs))
 
 	// Test dequeue batch with maxSize more than available elements
 	txs = queue.MustDequeBatch(10)
-	assert.Equal(t, 5, len(*txs)) // Only 5 elements should remain after the previous deque operation
+	assert.Equal(t, 5, len(txs)) // Only 5 elements should remain after the previous deque operation
 }

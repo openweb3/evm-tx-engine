@@ -10,15 +10,15 @@ import (
 
 func StartNonceManageWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	var txs = ctx.NonceManagingQueue.MustDequeBatch(maxBatchSize)
-	if len(*txs) == 0 {
+	if len(txs) == 0 {
 		return nil
 	}
-	for _, tx := range *txs {
-		err := SetTransactionNonce(ctx.Db, &tx)
+	for _, tx := range txs {
+		err := SetTransactionNonce(ctx.Db, tx)
 		if err != nil {
-			ctx.ErrQueue.MustEnqueWithLog(tx, "NonceManager", "set nonce error")
+			ctx.ErrQueue.MustEnqueWithLog(*tx, "NonceManager", "set nonce error")
 		}
-		ctx.SigningQueue.MustEnqueWithLog(tx, "NonceManager", "tx nonce allocated")
+		ctx.SigningQueue.MustEnqueWithLog(*tx, "NonceManager", "tx nonce allocated")
 	}
 	return nil
 }

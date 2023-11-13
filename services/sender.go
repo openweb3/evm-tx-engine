@@ -42,25 +42,25 @@ func StartSenderRound(db *gorm.DB) {
 // don't actually send but mark as pending
 func StartSenderWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 	var txs = ctx.SendingQueue.MustDequeBatch(maxBatchSize)
-	if len(*txs) == 0 {
+	if len(txs) == 0 {
 		return nil
 	}
-	backupTxs := *txs
+	backupTxs := backupChainTransactions(txs)
 
 	err := func() error {
 		// TODO: send transactions to node here
-		for i := range *txs {
-			(*txs)[i].TxStatus = utils.TxPoolPending
+		for _, tx := range txs {
+			tx.TxStatus = utils.TxPoolPending
 		}
 		return nil
 	}()
 
 	// processes sending error
 	if err != nil {
-		*txs = backupTxs
+		txs = backupTxs
 		logrus.WithError(err).Error("Failed to send transactions")
-		for _, tx := range *txs {
-			ctx.ErrQueue.MustEnqueWithLog(tx, "Sender", "error sending transaction")
+		for _, tx := range txs {
+			ctx.ErrQueue.MustEnqueWithLog(*tx, "Sender", "error sending transaction")
 		}
 		return err
 	}
@@ -71,9 +71,9 @@ func StartSenderWorkerRound(ctx *QueueContext, maxBatchSize int) error {
 		return err
 	}
 
-	for _, tx := range *txs {
-		ctx.PoolOrChainQueue.MustEnqueWithLog(tx, "Sender", "transaction sent")
+	for _, tx := range txs {
+		ctx.PoolOrChainQueue.MustEnqueWithLog(*tx, "Sender", "transaction sent")
 	}
-	logrus.WithField("service", "sender").Infof("batch sent %d transaction(s)", len(*txs))
+	logrus.WithField("service", "sender").Infof("batch sent %d transaction(s)", len(txs))
 	return nil
 }
