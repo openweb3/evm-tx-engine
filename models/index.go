@@ -2,9 +2,11 @@ package models
 
 import (
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/openweb3/evm-tx-engine/config"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -50,5 +52,7 @@ func SaveWithRetry(db *gorm.DB, value interface{}) error {
 		}
 		time.Sleep(time.Duration(defaultRetryInterval) * time.Millisecond)
 	}
-	return fmt.Errorf("data failed to save after %d retries: %+v", maxRetry, value)
+	err := fmt.Errorf("data failed to save after %d retries: %+v", maxRetry, value)
+	logrus.WithError(err).WithField("stack", string(debug.Stack())).Errorf("failed to save data")
+	return err
 }
