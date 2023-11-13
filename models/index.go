@@ -32,8 +32,16 @@ func ConnectDB(dbName string) *gorm.DB {
 }
 
 func Migrate(db *gorm.DB) error {
+	// NOTE: DON'T TRY TO MERGE THE 2 AUDOMIGRATE
+	// merging them will bring about errors
 	err := db.AutoMigrate(
 		&Chain{},
+	)
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(
+		// &Chain{},
 		&Account{},
 		&ChainAccount{},
 		&Task{},

@@ -14,8 +14,17 @@ import (
 func initDbTestChain(db *gorm.DB) (*models.Chain, error) {
 	chain := models.Chain{
 		Name:           "ethereum",
-		ID:             1,
+		ChainId:        1,
 		Type:           "evm",
+		LatestBlock:    5,
+		SafeBlock:      4,
+		FinalizedBlock: 3,
+	}
+	// extra test data to make sure ChainId could be same
+	chain_ := models.Chain{
+		Name:           "conflux testnet",
+		ChainId:        1,
+		Type:           "cfx",
 		LatestBlock:    5,
 		SafeBlock:      4,
 		FinalizedBlock: 3,
@@ -23,6 +32,10 @@ func initDbTestChain(db *gorm.DB) (*models.Chain, error) {
 	err := db.First(&chain).Error
 	if err == gorm.ErrRecordNotFound {
 		err = db.Create(&chain).Error
+		if err != nil {
+			return nil, err
+		}
+		err = db.Create(&chain_).Error
 	}
 	return &chain, err
 }
