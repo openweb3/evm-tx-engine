@@ -25,7 +25,7 @@ const (
 	TaskUnexpected TaskStatus = 99900
 )
 
-func (ts TaskStatus) Name() string {
+func (ts TaskStatus) String() string {
 	switch ts {
 	case TaskWaiting:
 		return "WAITING"

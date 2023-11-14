@@ -21,7 +21,7 @@ const (
 	TxChainFinalizedError TxStatus = 82309
 )
 
-func (ts TxStatus) Name() string {
+func (ts TxStatus) String() string {
 	switch ts {
 	case TxInternalTargetQueue:
 		return "TARGET_QUEUE"
