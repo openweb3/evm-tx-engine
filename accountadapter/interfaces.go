@@ -2,7 +2,7 @@ package accountadapter
 
 import "github.com/openweb3/evm-tx-engine/models"
 
-var Signer AccountAdapter
+var Adapter AccountAdapter
 
 // AccountAdapter is the interface for the account manager adapter.
 type AccountAdapter interface {
@@ -11,7 +11,7 @@ type AccountAdapter interface {
 	// CreateAccount creates a new account with the given chain, wrapped private key, and wrapping public key
 	CreateAccount(chain string, wrappedPrivateKey string, wrappingPublicKey string, wrappingAlg string) (string, error)
 	// GetAccounts returns a list of accounts associated with the given chain
-	GetAccounts(chain string) ([]models.Account, error)
+	GetAccounts(chain string) ([]string, error)
 	// SignRaw signs a raw byte array with the given address
 	SignRaw(address string, data []byte) ([]byte, error)
 	// SignTransaction signs a transaction with the given address
@@ -23,5 +23,9 @@ type AccountAdapter interface {
 }
 
 func init() {
-	Signer = NewSimpleAccountAdapter()
+	var err error
+	Adapter, err = NewSimpleAccountAdapter()
+	if err != nil {
+		panic(err)
+	}
 }

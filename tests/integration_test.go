@@ -1,9 +1,11 @@
 package tests
 
 import (
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/openweb3/evm-tx-engine/accountadapter"
 	"github.com/openweb3/evm-tx-engine/models"
 	"github.com/openweb3/evm-tx-engine/routers"
 	"github.com/openweb3/evm-tx-engine/services"
@@ -40,28 +42,48 @@ func initDbTestChain(db *gorm.DB) (*models.Chain, error) {
 	return &chain, err
 }
 
-func initDbTestAccount(db *gorm.DB, chain *models.Chain) (*models.Account, error) {
-	address := "0x000000000000000000000000"
-	account := models.Account{}
-	err := db.Preload("ChainAccounts").First(&account).Error
-	if err == gorm.ErrRecordNotFound || account.ChainAccounts == nil {
-		account.ChainAccounts = []models.ChainAccount{
-			{
-				Chain:               *chain,
-				Address:             address,
-				LastSponsorInit:     time.Now(),
-				LastSponsorReceived: time.Now(),
-			},
-		}
-		err = db.Save(&account).Error
+func initDbTestAccount(db *gorm.DB, chain *models.Chain) ([]*models.Account, error) {
+
+	accounts, err := accountadapter.Adapter.GetAccounts(chain.Name)
+
+	if err != nil {
+		return nil, err
 	}
-	return &account, err
+
+	if len(accounts) == 0 {
+		return nil, errors.New("empty accounts list to insert")
+	}
+
+	rtn := make([]*models.Account, 0)
+
+	for _, address := range accounts {
+
+		account := models.Account{}
+		err := db.Preload("ChainAccounts").Where("address = ?", address).First(&account).Error
+		if err == gorm.ErrRecordNotFound || account.ChainAccounts == nil {
+			account.ChainAccounts = []models.ChainAccount{
+				{
+					Chain:               *chain,
+					Address:             address,
+					LastSponsorInit:     time.Now(),
+					LastSponsorReceived: time.Now(),
+				},
+			}
+			err = db.Save(&account).Error
+
+			if err != nil {
+				return nil, err
+			}
+		}
+		rtn = append(rtn, &account)
+	}
+	return rtn, nil
 }
 
 func insertTasks(db *gorm.DB) (*[]uint, error) {
 	request := routers.TaskRequest{
 		Chain: "ethereum",
-		From:  "0x000000000000000000000000",
+		From:  "0xe6D148D8398c4cb456196C776D2d9093Dd62C9B0",
 		Fields: routers.Fields{
 			To:           "0x000000000000000000000001",
 			MaxFeePerGas: "100000000000000",

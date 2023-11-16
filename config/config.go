@@ -19,9 +19,12 @@ type Config struct {
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 	} `yaml:"mysql"`
+	Secrets struct {
+		Accounts []string `yaml:"accounts"`
+	} `yaml:"secrets"`
 }
 
-func Init() {
+func init() {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
 	viper.AddConfigPath(".")      // optionally look for config in the working directory
