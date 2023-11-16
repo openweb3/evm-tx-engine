@@ -10,22 +10,43 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/openweb3/evm-tx-engine/config"
 	"github.com/openweb3/evm-tx-engine/models"
+	"github.com/openweb3/web3go/interfaces"
 	"github.com/openweb3/web3go/signers"
+	"github.com/sirupsen/logrus"
 )
 
 // TODO: block same data signing (if not using same nonce, then secret key would leak)
 
 type SimpleAccountAdapter struct {
 	keystore *keystore.KeyStore
+	Manager  *signers.SignerManager
 }
 
-func NewSimpleAccountAdapter() *SimpleAccountAdapter {
-	// You can change the directory path and other parameters as needed.
+func NewSimpleAccountAdapter() (*SimpleAccountAdapter, error) {
+	signers_ := make([]interfaces.Signer, 0)
+
+	availableAccounts := config.GetConfig().Secrets.Accounts
+
+	for index, secretKey := range availableAccounts {
+		s, err := signers.NewPrivateKeySignerByString(secretKey)
+		if err != nil {
+			logrus.Fatalf("failed to load the %d secret key from config", index)
+			return nil, err
+		}
+		logrus.Infof("loaded secret key: %s", s.Address())
+		signers_ = append(signers_, s)
+	}
+
+	manager := signers.NewSignerManager(signers_)
+
 	ks := keystore.NewKeyStore("./keystore", keystore.StandardScryptN, keystore.StandardScryptP)
+
 	return &SimpleAccountAdapter{
 		keystore: ks,
-	}
+		Manager:  manager,
+	}, nil
 }
 
 func (s *SimpleAccountAdapter) GetWrappingPublicKey() (map[string]string, error) {
@@ -67,19 +88,17 @@ func (s *SimpleAccountAdapter) CreateAccount(chain string, wrappedPrivateKey str
 	return account.Address.Hex(), nil
 }
 
-func (s *SimpleAccountAdapter) GetAccounts(chain string) ([]models.Account, error) {
+func (adapter *SimpleAccountAdapter) GetAccounts(chain string) ([]string, error) {
 	if chain != "ethereum" {
 		return nil, errors.New("unsupported chain")
 	}
 
-	ethAccounts := s.keystore.Accounts()
-	var accounts []models.Account
-	for range ethAccounts {
-		accounts = append(accounts, models.Account{
-			// Address: acc.Address.Hex(),
-			// ... other fields, you might want to store additional metadata separately.
-		})
+	accounts := make([]string, 0)
+
+	for _, account := range adapter.Manager.List() {
+		accounts = append(accounts, account.Address().String())
 	}
+
 	return accounts, nil
 }
 
@@ -92,8 +111,9 @@ func (s *SimpleAccountAdapter) SignRaw(address string, data []byte) ([]byte, err
 	return signature, nil
 }
 
-func (s *SimpleAccountAdapter) SignTransaction(address string, chainId uint, field models.Field) ([]byte, error) {
+func (adapter *SimpleAccountAdapter) SignTransaction(address string, chainId uint, field models.Field) ([]byte, error) {
 	to := common.HexToAddress(field.To)
+	from := common.HexToAddress(address)
 
 	// Create the transaction object
 	tx := types.NewTx(&types.DynamicFeeTx{
@@ -108,7 +128,8 @@ func (s *SimpleAccountAdapter) SignTransaction(address string, chainId uint, fie
 
 	// Sign the transaction
 	// This is a simplified example. In a real-world scenario, you should securely manage the private key.
-	signer, err := signers.NewPrivateKeySignerByString("9ec393923a14eeb557600010ea05d635c667a6995418f8a8f4bdecc63dfe0bb9")
+
+	signer, err := adapter.Manager.Get(from)
 	if err != nil {
 		return nil, err
 	}

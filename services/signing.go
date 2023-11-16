@@ -14,7 +14,7 @@ func batchSign(db *gorm.DB, txs []*models.ChainTransaction) error {
 		if err != nil {
 			return err
 		}
-		signer := accountadapter.Signer
+		signer := accountadapter.Adapter
 
 		signed, err := signer.SignTransaction(fromAccount.Address, fromAccount.Chain.ChainId, tx.Field)
 		if err != nil {

@@ -3,3 +3,6 @@ mysql:
   port: 3306
   user: root
   password: 12345678
+secrets:
+  accounts:
+    - 9ec393923a14eeb557600010ea05d635c667a6995418f8a8f4bdecc63dfe0bb9
