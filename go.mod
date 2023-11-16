@@ -1,6 +1,6 @@
 module github.com/openweb3/evm-tx-engine
 
-go 1.19
+go 1.20
 
 require (
 	github.com/enriquebris/goconcurrentqueue v0.7.0
