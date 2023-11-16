@@ -10,17 +10,13 @@ import (
 
 func batchSign(db *gorm.DB, txs []*models.ChainTransaction) error {
 	for _, tx := range txs {
-		txReadyToSign, err := tx.PrepareTransactionToSign()
-		if err != nil {
-			return err
-		}
 		fromAccount, err := tx.GetTransactionFrom(db)
 		if err != nil {
 			return err
 		}
 		signer := accountadapter.Signer
 
-		signed, err := signer.SignTransaction(fromAccount.Address, txReadyToSign)
+		signed, err := signer.SignTransaction(fromAccount.Address, fromAccount.Chain.ChainId, tx.Field)
 		if err != nil {
 			return err
 		}

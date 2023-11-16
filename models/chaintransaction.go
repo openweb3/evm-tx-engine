@@ -28,11 +28,6 @@ func FetchChainTransactionStatusAndStabilityFromChain(db *gorm.DB, chainTransact
 
 }
 
-// TODO: prepare the transaction for signer to sign
-func (chainTransaction *ChainTransaction) PrepareTransactionToSign() (interface{}, error) {
-	return nil, nil
-}
-
 // TODO: check if could sign for specific chain?
 func (chainTransaction *ChainTransaction) GetTransactionFrom(db *gorm.DB) (*ChainAccount, error) {
 	var task Task

@@ -3,12 +3,15 @@ package accountadapter
 import (
 	"crypto/ecdsa"
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/openweb3/evm-tx-engine/models"
+	"github.com/openweb3/web3go/signers"
 )
 
 // TODO: block same data signing (if not using same nonce, then secret key would leak)
@@ -89,9 +92,34 @@ func (s *SimpleAccountAdapter) SignRaw(address string, data []byte) ([]byte, err
 	return signature, nil
 }
 
-func (s *SimpleAccountAdapter) SignTransaction(address string, transaction interface{}) ([]byte, error) {
-	rawTx := []byte{8}
-	return rawTx, nil
+func (s *SimpleAccountAdapter) SignTransaction(address string, chainId uint, field models.Field) ([]byte, error) {
+	to := common.HexToAddress(field.To)
+
+	// Create the transaction object
+	tx := types.NewTx(&types.DynamicFeeTx{
+		To:        &to,
+		Value:     field.Value.ToBig(),
+		GasFeeCap: field.MaxFeePerGas.ToBig(),
+		GasTipCap: field.PriorityFeePerGas.ToBig(),
+		Nonce:     *field.Nonce,
+		Gas:       field.GasLimit.ToBig().Uint64(),
+		ChainID:   big.NewInt(int64(chainId)),
+	})
+
+	// Sign the transaction
+	// This is a simplified example. In a real-world scenario, you should securely manage the private key.
+	signer, err := signers.NewPrivateKeySignerByString("9ec393923a14eeb557600010ea05d635c667a6995418f8a8f4bdecc63dfe0bb9")
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err = signer.SignTransaction(tx, big.NewInt(int64(chainId)))
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the signed transaction
+	return tx.MarshalBinary()
 }
 
 func (s *SimpleAccountAdapter) Encrypt(address string, data []byte) ([]byte, error) {
