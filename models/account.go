@@ -33,7 +33,6 @@ type ChainAccount struct {
 	// Account   Account `gorm:"foreignKey:AccountId"`
 	// Address of the chain account
 	Address string `gorm:"type:varchar(255)"`
-	ChainId uint   `gorm:"type:int"` // the primary key of model Chain but might not be the actual chain id
 	// ChainType           string `gorm:"type:varchar(255)"`
 	Chain               Chain `gorm:"foreignKey:ChainId;References:ID"`
 	LastSponsorInit     time.Time

@@ -15,7 +15,7 @@ type AccountAdapter interface {
 	// SignRaw signs a raw byte array with the given address
 	SignRaw(address string, data []byte) ([]byte, error)
 	// SignTransaction signs a transaction with the given address
-	SignTransaction(address string, transaction interface{}) ([]byte, error) // Transaction type will depend on specific blockchain
+	SignTransaction(address string, chainId uint, transaction models.Field) ([]byte, error) // Transaction type will depend on specific blockchain
 	// Encrypt encrypts the given data with the given address
 	Encrypt(address string, data []byte) ([]byte, error)
 	// Verify verifies the given signature and data with the given address
